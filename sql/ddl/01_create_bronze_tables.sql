@@ -2,12 +2,13 @@
 -- Camada BRONZE
 -- Objetivo: armazenar os dados brutos, exatamente como recebidos da
 -- fonte, com colunas de controle de ingestão (metadados de auditoria).
+-- Pré-requisito: executar 00_setup_unity_catalog.sql
 -- =====================================================================
 
-CREATE SCHEMA IF NOT EXISTS bronze;
+USE CATALOG lakehouse_catalog;
 
 -- Dados brutos de clientes
-CREATE TABLE IF NOT EXISTS bronze.clientes_raw (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.bronze.clientes_raw (
     id_cliente          STRING,
     nome                STRING,
     email               STRING,
@@ -19,7 +20,7 @@ CREATE TABLE IF NOT EXISTS bronze.clientes_raw (
 ) USING DELTA;
 
 -- Dados brutos de produtos
-CREATE TABLE IF NOT EXISTS bronze.produtos_raw (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.bronze.produtos_raw (
     id_produto          STRING,
     nome_produto        STRING,
     categoria           STRING,
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS bronze.produtos_raw (
 ) USING DELTA;
 
 -- Dados brutos de vendas/transações
-CREATE TABLE IF NOT EXISTS bronze.vendas_raw (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.bronze.vendas_raw (
     id_venda            STRING,
     id_cliente          STRING,
     id_produto          STRING,
