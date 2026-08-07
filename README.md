@@ -2,24 +2,26 @@
 
 ## Contexto
 
-Este projeto faz parte do portfólio de estudos e projetos práticos em Engenharia e Analytics de Dados. O objetivo é simular a modelagem analítica de um ambiente **Lakehouse**, unindo a flexibilidade de um Data Lake com a governança e performance de um Data Warehouse, utilizando **Apache Spark**, **SQL** e o **Databricks Unity Catalog** como principais ferramentas de processamento, governança e consulta.
+Este projeto faz parte do portfólio de estudos e projetos práticos em Engenharia e Analytics de Dados. Ele simula, de ponta a ponta, um pipeline de dados sobre um ambiente **Lakehouse**: extração de dados via **web scraping**, armazenamento em um **Volume** do Databricks, e processamento em camadas (**Bronze → Silver → Gold**) utilizando **PySpark**, **SQL** e o **Databricks Unity Catalog**.
 
-O projeto está em construção e será evoluído incrementalmente com novos modelos, otimizações e exemplos de consumo analítico.
+Como estudo de caso, os dados são coletados do site público [books.toscrape.com](https://books.toscrape.com/) — criado especificamente para prática de web scraping — simulando um cenário real de ingestão de dados externos.
 
 ## Objetivo
 
-- Demonstrar a construção de uma arquitetura de dados em camadas (Bronze, Silver e Gold) sobre um Lakehouse.
-- Estruturar a governança dos dados no Databricks utilizando Unity Catalog (Catalog, Schemas, Volume e Tabelas).
-- Aplicar boas práticas de modelagem dimensional para consumo analítico (ex.: esquemas estrela).
-- Utilizar Spark para ingestão e transformação de dados, e SQL para modelagem e consultas analíticas.
-- Servir como material de estudo e referência para pipelines de dados analíticos.
+- Demonstrar a extração de dados de uma fonte externa (scraping) e seu armazenamento em um Volume do Unity Catalog.
+- Construir uma arquitetura de dados em camadas (Bronze, Silver e Gold) sobre um Lakehouse.
+- Estruturar a governança dos dados no Databricks (Catalog, Schemas, Volume e Tabelas).
+- Aplicar boas práticas de modelagem dimensional para consumo analítico (esquema estrela).
+- Separar claramente **funções reutilizáveis** (`.py`) de **notebooks de execução/transformação** (`.ipynb`), como em um projeto real no Databricks.
 
 ## Stack utilizada
 
 - **Apache Spark / PySpark** — processamento distribuído e transformação de dados.
+- **Requests / BeautifulSoup** — extração (scraping) dos dados de origem.
 - **SQL** — modelagem analítica, criação de tabelas e consultas.
 - **Delta Lake** (formato de tabela, conceitual) — versionamento e confiabilidade das camadas.
 - **Databricks Unity Catalog** — governança de Catalog, Schemas, Volumes e Tabelas.
+- **Jupyter / Databricks Notebooks** — orquestração das transformações.
 
 ## Estrutura do projeto
 
@@ -36,33 +38,38 @@ modelagem-analitica-lakehouse/
 │       ├── 02_create_silver_tables.sql
 │       └── 03_create_gold_tables.sql
 ├── src/
-│   ├── bronze/
-│   │   └── ingest_bronze.py
-│   ├── silver/
-│   │   └── transform_silver.py
-│   └── gold/
-│       └── aggregate_gold.py
+│   └── common/                  # apenas funções reutilizáveis (.py)
+│       ├── spark_utils.py
+│       ├── scraping_utils.py
+│       ├── bronze_utils.py
+│       ├── silver_utils.py
+│       └── gold_utils.py
+├── notebooks/                   # notebooks Databricks (.ipynb) — execução do pipeline
+│   ├── 01_scrape_to_volume.ipynb
+│   ├── 02_ingest_bronze.ipynb
+│   ├── 03_transform_silver.ipynb
+│   └── 04_aggregate_gold.ipynb
 ├── requirements.txt
 └── .gitignore
 ```
 
 ## Arquitetura
 
-A visão detalhada da arquitetura (camadas, fluxo de dados, estrutura no Unity Catalog e decisões de modelagem) está documentada em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), incluindo um diagrama visual da solução.
+A visão detalhada da arquitetura (scraping, camadas, Unity Catalog e modelagem dimensional) está documentada em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), incluindo um diagrama visual do pipeline completo.
 
 ## Como executar (no Databricks)
 
-Passo 1. Execute `sql/ddl/00_setup_unity_catalog.sql` para criar o Catalog (`lakehouse_catalog`), os Schemas (`bronze`, `silver`, `gold`) e o Volume de landing (`bronze.landing_volume`).
+Passo 1. Execute `sql/ddl/00_setup_unity_catalog.sql` para criar o Catalog (`lakehouse_catalog`), os Schemas (`bronze`, `silver`, `gold`) e o Volume de landing.
 
-Passo 2. Carregue os arquivos de origem (CSV) no Volume, em `/Volumes/lakehouse_catalog/bronze/landing_volume/`.
+Passo 2. Execute os demais scripts DDL (`01`, `02` e `03`) para criar as tabelas de cada camada.
 
-Passo 3. Execute os demais scripts DDL (`01`, `02` e `03`) para criar as tabelas das camadas Bronze, Silver e Gold.
+Passo 3. Execute os notebooks em `notebooks/`, na ordem: `01_scrape_to_volume` → `02_ingest_bronze` → `03_transform_silver` → `04_aggregate_gold`.
 
-Passo 4. Execute os scripts em `src/` na ordem: ingestão (Bronze) → transformação (Silver) → agregação analítica (Gold).
+Os notebooks importam as funções definidas em `src/common/` — nenhuma lógica de transformação vive fora dos módulos `.py` ou dos notebooks.
 
 ## Status
 
-🚧 Projeto em construção — novos modelos e melhorias serão adicionados progressivamente.
+✅ **Concluído** — pipeline completo, do scraping à camada Gold, com governança via Unity Catalog. Próximas evoluções podem incluir agendamento via Databricks Workflows e testes automatizados de qualidade de dados.
 
 ## Autor
 
