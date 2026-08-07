@@ -1,18 +1,23 @@
 """
 Camada Bronze — Ingestão de dados brutos.
 
-Este script lê os dados de origem (arquivos CSV/JSON/Parquet) e grava,
-sem transformação, nas tabelas da camada Bronze do Lakehouse,
-adicionando apenas metadados de auditoria (arquivo de origem e
-timestamp de ingestão).
+Este script lê os dados de origem a partir do Volume do Unity Catalog
+(landing_volume) e grava, sem transformação, nas tabelas da camada
+Bronze do Lakehouse, adicionando apenas metadados de auditoria
+(arquivo de origem e timestamp de ingestão).
+
+Pré-requisito: executar sql/ddl/00_setup_unity_catalog.sql
 """
 
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 
-SOURCE_PATH_CLIENTES = "/mnt/landing/clientes/"
-SOURCE_PATH_PRODUTOS = "/mnt/landing/produtos/"
-SOURCE_PATH_VENDAS = "/mnt/landing/vendas/"
+CATALOG = "lakehouse_catalog"
+VOLUME_BASE_PATH = f"/Volumes/{CATALOG}/bronze/landing_volume"
+
+SOURCE_PATH_CLIENTES = f"{VOLUME_BASE_PATH}/clientes/"
+SOURCE_PATH_PRODUTOS = f"{VOLUME_BASE_PATH}/produtos/"
+SOURCE_PATH_VENDAS = f"{VOLUME_BASE_PATH}/vendas/"
 
 
 def get_spark_session() -> SparkSession:
@@ -21,7 +26,7 @@ def get_spark_session() -> SparkSession:
 
 
 def ingest_raw(spark: SparkSession, source_path: str, source_format: str = "csv"):
-    """Lê os dados brutos da origem e adiciona colunas de auditoria."""
+    """Lê os dados brutos do Volume e adiciona colunas de auditoria."""
     df = (
         spark.read.format(source_format)
         .option("header", "true")
@@ -35,15 +40,22 @@ def ingest_raw(spark: SparkSession, source_path: str, source_format: str = "csv"
 
 def main():
     spark = get_spark_session()
+    spark.sql(f"USE CATALOG {CATALOG}")
 
     clientes_df = ingest_raw(spark, SOURCE_PATH_CLIENTES)
-    clientes_df.write.format("delta").mode("append").saveAsTable("bronze.clientes_raw")
+    clientes_df.write.format("delta").mode("append").saveAsTable(
+        f"{CATALOG}.bronze.clientes_raw"
+    )
 
     produtos_df = ingest_raw(spark, SOURCE_PATH_PRODUTOS)
-    produtos_df.write.format("delta").mode("append").saveAsTable("bronze.produtos_raw")
+    produtos_df.write.format("delta").mode("append").saveAsTable(
+        f"{CATALOG}.bronze.produtos_raw"
+    )
 
     vendas_df = ingest_raw(spark, SOURCE_PATH_VENDAS)
-    vendas_df.write.format("delta").mode("append").saveAsTable("bronze.vendas_raw")
+    vendas_df.write.format("delta").mode("append").saveAsTable(
+        f"{CATALOG}.bronze.vendas_raw"
+    )
 
     print("Ingestão da camada Bronze concluída com sucesso.")
 
