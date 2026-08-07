@@ -21,14 +21,12 @@ COMMENT 'Camada Silver: dados limpos e padronizados';
 CREATE SCHEMA IF NOT EXISTS lakehouse_catalog.gold
 COMMENT 'Camada Gold: modelo dimensional para consumo analítico';
 
--- 3. Volume — armazenamento dos arquivos brutos de origem (antes da ingestão)
+-- 3. Volume — armazenamento dos arquivos brutos extraídos via scraping
 CREATE VOLUME IF NOT EXISTS lakehouse_catalog.bronze.landing_volume
-COMMENT 'Volume para armazenar os arquivos brutos (CSV/JSON/Parquet) recebidos das fontes, antes da ingestão na camada Bronze';
+COMMENT 'Volume para armazenar os arquivos brutos extraídos via scraping (books.toscrape.com), antes da ingestão na camada Bronze';
 
 -- Estrutura de pastas esperada dentro do Volume:
---   /Volumes/lakehouse_catalog/bronze/landing_volume/clientes/
---   /Volumes/lakehouse_catalog/bronze/landing_volume/produtos/
---   /Volumes/lakehouse_catalog/bronze/landing_volume/vendas/
+--   /Volumes/lakehouse_catalog/bronze/landing_volume/livros/livros.json
 
 -- 4. Tabelas
 -- As tabelas de cada camada são criadas nos scripts seguintes:
@@ -36,4 +34,4 @@ COMMENT 'Volume para armazenar os arquivos brutos (CSV/JSON/Parquet) recebidos d
 --   02_create_silver_tables.sql
 --   03_create_gold_tables.sql
 -- Todas utilizam o nome completo no padrão Unity Catalog:
---   catalog.schema.tabela  (ex.: lakehouse_catalog.bronze.clientes_raw)
+--   catalog.schema.tabela  (ex.: lakehouse_catalog.bronze.livros_raw)
