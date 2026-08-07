@@ -13,6 +13,10 @@ Este projeto adota a **arquitetura medalhão (Medallion Architecture)**, um padr
      [Fonte] ───────▶ [bronze.*] ─────▶ [silver.*] ─────▶ [gold.*]
 ```
 
+## Diagrama da Arquitetura
+
+![Arquitetura Lakehouse — Databricks Unity Catalog](architecture_diagram.png)
+
 ## Camada Bronze
 
 - Recebe os dados brutos, sem transformação, exatamente como vieram da fonte (arquivos CSV/JSON/Parquet, APIs, bancos relacionais).
@@ -40,17 +44,52 @@ A camada Gold segue os princípios de modelagem dimensional:
 - **Tabelas Fato**: armazenam métricas e eventos de negócio (ex.: vendas, transações), com granularidade bem definida.
 - **Tabelas Dimensão**: descrevem o contexto das métricas (ex.: cliente, produto, tempo, região), permitindo análises multidimensionais (drill-down, slice-and-dice).
 
+## Implementação no Databricks (Unity Catalog)
+
+O projeto foi desenhado para ser implantado em um workspace Databricks, utilizando o **Unity Catalog** para governança dos dados. A hierarquia de objetos segue o padrão:
+
+```
+Catalog (lakehouse_catalog)
+ ├── Volume (armazenamento de arquivos)
+ │    └── bronze.landing_volume  →  /Volumes/lakehouse_catalog/bronze/landing_volume/
+ │
+ ├── Schema bronze
+ │    ├── clientes_raw
+ │    ├── produtos_raw
+ │    └── vendas_raw
+ │
+ ├── Schema silver
+ │    ├── clientes
+ │    ├── produtos
+ │    └── vendas
+ │
+ └── Schema gold
+      ├── dim_cliente
+      ├── dim_produto
+      ├── dim_tempo
+      └── fato_vendas
+```
+
+Etapas de configuração (ver `sql/ddl/00_setup_unity_catalog.sql`):
+
+- **Catalog**: `lakehouse_catalog` é o catálogo raiz do projeto, isolando seus dados de outros projetos no mesmo workspace.
+- **Schemas**: um schema por camada (`bronze`, `silver`, `gold`), permitindo aplicar permissões e organização independentes por camada.
+- **Volume**: `lakehouse_catalog.bronze.landing_volume` é utilizado para armazenar os arquivos brutos (CSV/JSON/Parquet) recebidos das fontes de dados antes de serem lidos e gravados como tabelas Delta na camada Bronze.
+- **Tabelas**: criadas dentro de cada schema, sempre referenciadas pelo nome completo `catalog.schema.tabela` (ex.: `lakehouse_catalog.gold.fato_vendas`), conforme as boas práticas de governança do Unity Catalog.
+
 ## Ferramentas
 
 - **Apache Spark / PySpark**: motor de processamento distribuído utilizado para ingestão (Bronze) e transformação (Silver/Gold).
 - **SQL**: utilizado para definição de esquemas (DDL) e para consultas analíticas sobre as camadas.
 - **Delta Lake** (conceitual): formato de tabela que traz confiabilidade transacional (ACID), versionamento e time travel ao Lakehouse.
+- **Databricks Unity Catalog**: governança centralizada de Catalogs, Schemas, Volumes e Tabelas.
 
 ## Fluxo de Execução
 
-1. **Ingestão (Bronze)**: `src/bronze/ingest_bronze.py` lê a(s) fonte(s) de dados e grava na camada Bronze sem transformação.
-2. **Transformação (Silver)**: `src/silver/transform_silver.py` lê a camada Bronze, aplica limpeza e padronização, e grava na camada Silver.
-3. **Agregação Analítica (Gold)**: `src/gold/aggregate_gold.py` lê a camada Silver, aplica modelagem dimensional e agregações, e grava na camada Gold, pronta para consumo.
+1. **Setup (Unity Catalog)**: `sql/ddl/00_setup_unity_catalog.sql` cria o Catalog, os Schemas e o Volume de landing.
+2. **Ingestão (Bronze)**: `src/bronze/ingest_bronze.py` lê os arquivos do Volume e grava na camada Bronze sem transformação.
+3. **Transformação (Silver)**: `src/silver/transform_silver.py` lê a camada Bronze, aplica limpeza e padronização, e grava na camada Silver.
+4. **Agregação Analítica (Gold)**: `src/gold/aggregate_gold.py` lê a camada Silver, aplica modelagem dimensional e agregações, e grava na camada Gold, pronta para consumo.
 
 ## Próximos Passos
 
