@@ -2,12 +2,13 @@
 -- Camada SILVER
 -- Objetivo: dados limpos, com tipos corretos, deduplicados e
 -- padronizados, prontos para serem combinados/agregados na camada Gold.
+-- Pré-requisito: executar 00_setup_unity_catalog.sql
 -- =====================================================================
 
-CREATE SCHEMA IF NOT EXISTS silver;
+USE CATALOG lakehouse_catalog;
 
 -- Clientes padronizados e deduplicados
-CREATE TABLE IF NOT EXISTS silver.clientes (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.silver.clientes (
     id_cliente          STRING      NOT NULL,
     nome                STRING,
     email               STRING,
@@ -18,7 +19,7 @@ CREATE TABLE IF NOT EXISTS silver.clientes (
 ) USING DELTA;
 
 -- Produtos padronizados
-CREATE TABLE IF NOT EXISTS silver.produtos (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.silver.produtos (
     id_produto          STRING      NOT NULL,
     nome_produto        STRING,
     categoria           STRING,
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS silver.produtos (
 ) USING DELTA;
 
 -- Vendas padronizadas, com tipos corrigidos e chaves validadas
-CREATE TABLE IF NOT EXISTS silver.vendas (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.silver.vendas (
     id_venda            STRING      NOT NULL,
     id_cliente          STRING      NOT NULL,
     id_produto          STRING      NOT NULL,
