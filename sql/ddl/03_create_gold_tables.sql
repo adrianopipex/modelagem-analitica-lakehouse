@@ -2,12 +2,13 @@
 -- Camada GOLD
 -- Objetivo: modelo dimensional (esquema estrela) otimizado para
 -- consumo analítico e ferramentas de BI.
+-- Pré-requisito: executar 00_setup_unity_catalog.sql
 -- =====================================================================
 
-CREATE SCHEMA IF NOT EXISTS gold;
+USE CATALOG lakehouse_catalog;
 
 -- Dimensão Cliente
-CREATE TABLE IF NOT EXISTS gold.dim_cliente (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_cliente (
     sk_cliente          BIGINT      GENERATED ALWAYS AS IDENTITY,
     id_cliente          STRING      NOT NULL,
     nome                STRING,
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS gold.dim_cliente (
 ) USING DELTA;
 
 -- Dimensão Produto
-CREATE TABLE IF NOT EXISTS gold.dim_produto (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_produto (
     sk_produto          BIGINT      GENERATED ALWAYS AS IDENTITY,
     id_produto          STRING      NOT NULL,
     nome_produto        STRING,
@@ -26,7 +27,7 @@ CREATE TABLE IF NOT EXISTS gold.dim_produto (
 ) USING DELTA;
 
 -- Dimensão Tempo
-CREATE TABLE IF NOT EXISTS gold.dim_tempo (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_tempo (
     sk_tempo            BIGINT      GENERATED ALWAYS AS IDENTITY,
     data                DATE        NOT NULL,
     ano                 INT,
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS gold.dim_tempo (
 ) USING DELTA;
 
 -- Fato Vendas
-CREATE TABLE IF NOT EXISTS gold.fato_vendas (
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.fato_vendas (
     sk_venda            BIGINT      GENERATED ALWAYS AS IDENTITY,
     sk_cliente          BIGINT      NOT NULL,
     sk_produto          BIGINT      NOT NULL,
@@ -47,8 +48,8 @@ CREATE TABLE IF NOT EXISTS gold.fato_vendas (
 
 -- Exemplo de consulta analítica: faturamento por categoria e mês
 -- SELECT t.ano, t.mes, p.categoria, SUM(f.valor_total) AS faturamento
--- FROM gold.fato_vendas f
--- JOIN gold.dim_produto p ON f.sk_produto = p.sk_produto
--- JOIN gold.dim_tempo t ON f.sk_tempo = t.sk_tempo
+-- FROM lakehouse_catalog.gold.fato_vendas f
+-- JOIN lakehouse_catalog.gold.dim_produto p ON f.sk_produto = p.sk_produto
+-- JOIN lakehouse_catalog.gold.dim_tempo t ON f.sk_tempo = t.sk_tempo
 -- GROUP BY t.ano, t.mes, p.categoria
 -- ORDER BY t.ano, t.mes;
