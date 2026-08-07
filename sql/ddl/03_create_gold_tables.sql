@@ -1,32 +1,28 @@
 -- =====================================================================
 -- Camada GOLD
--- Objetivo: modelo dimensional (esquema estrela) otimizado para
--- consumo analítico e ferramentas de BI.
+-- Objetivo: modelo dimensional (esquema estrela) para análise de
+-- preços, avaliações e disponibilidade de livros por categoria e
+-- ao longo do tempo.
 -- Pré-requisito: executar 00_setup_unity_catalog.sql
 -- =====================================================================
 
 USE CATALOG lakehouse_catalog;
 
--- Dimensão Cliente
-CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_cliente (
-    sk_cliente          BIGINT      GENERATED ALWAYS AS IDENTITY,
-    id_cliente          STRING      NOT NULL,
-    nome                STRING,
-    cidade              STRING,
-    estado              STRING,
-    faixa_etaria        STRING
+-- Dimensão Livro
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_livro (
+    sk_livro            BIGINT      GENERATED ALWAYS AS IDENTITY,
+    id_livro            STRING      NOT NULL,
+    titulo              STRING,
+    categoria           STRING
 ) USING DELTA;
 
--- Dimensão Produto
-CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_produto (
-    sk_produto          BIGINT      GENERATED ALWAYS AS IDENTITY,
-    id_produto          STRING      NOT NULL,
-    nome_produto        STRING,
-    categoria           STRING,
-    preco_unitario      DECIMAL(10,2)
+-- Dimensão Categoria
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_categoria (
+    sk_categoria        BIGINT      GENERATED ALWAYS AS IDENTITY,
+    categoria           STRING      NOT NULL
 ) USING DELTA;
 
--- Dimensão Tempo
+-- Dimensão Tempo (data da coleta)
 CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_tempo (
     sk_tempo            BIGINT      GENERATED ALWAYS AS IDENTITY,
     data                DATE        NOT NULL,
@@ -36,20 +32,21 @@ CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.dim_tempo (
     nome_mes            STRING
 ) USING DELTA;
 
--- Fato Vendas
-CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.fato_vendas (
-    sk_venda            BIGINT      GENERATED ALWAYS AS IDENTITY,
-    sk_cliente          BIGINT      NOT NULL,
-    sk_produto          BIGINT      NOT NULL,
+-- Fato Preço do Livro (snapshot de preço/rating/disponibilidade por coleta)
+CREATE TABLE IF NOT EXISTS lakehouse_catalog.gold.fato_preco_livro (
+    sk_fato             BIGINT      GENERATED ALWAYS AS IDENTITY,
+    sk_livro            BIGINT      NOT NULL,
+    sk_categoria        BIGINT      NOT NULL,
     sk_tempo            BIGINT      NOT NULL,
-    quantidade          INT,
-    valor_total         DECIMAL(12,2)
+    preco               DECIMAL(10,2),
+    rating              INT,
+    disponivel          BOOLEAN
 ) USING DELTA;
 
--- Exemplo de consulta analítica: faturamento por categoria e mês
--- SELECT t.ano, t.mes, p.categoria, SUM(f.valor_total) AS faturamento
--- FROM lakehouse_catalog.gold.fato_vendas f
--- JOIN lakehouse_catalog.gold.dim_produto p ON f.sk_produto = p.sk_produto
+-- Exemplo de consulta analítica: preço médio por categoria e mês
+-- SELECT t.ano, t.mes, c.categoria, AVG(f.preco) AS preco_medio
+-- FROM lakehouse_catalog.gold.fato_preco_livro f
+-- JOIN lakehouse_catalog.gold.dim_categoria c ON f.sk_categoria = c.sk_categoria
 -- JOIN lakehouse_catalog.gold.dim_tempo t ON f.sk_tempo = t.sk_tempo
--- GROUP BY t.ano, t.mes, p.categoria
+-- GROUP BY t.ano, t.mes, c.categoria
 -- ORDER BY t.ano, t.mes;
