@@ -98,9 +98,3 @@ Para manter o projeto organizado e reutilizável, o código segue uma separaçã
 ## Status
 
 ✅ Pipeline completo, do scraping à camada Gold, com governança via Unity Catalog.
-
-## Próximos Passos
-
-- Agendar a execução dos notebooks via Databricks Workflows (Jobs).
-- Incluir testes automatizados de qualidade de dados.
-- Explorar otimizações de performance (particionamento, Z-Ordering, cache).
