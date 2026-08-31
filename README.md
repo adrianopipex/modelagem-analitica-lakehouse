@@ -73,4 +73,4 @@ Os notebooks importam as funções definidas em `src/common/` — nenhuma lógic
 
 ## Autor
 
-Projeto desenvolvido por Adriano como parte do portfólio de projetos em Engenharia de Dados e Analytics.
+Projeto desenvolvido por Adriano Costa como parte do portfólio de projetos em Engenharia de Dados e Analytics.
